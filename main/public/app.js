@@ -28,7 +28,7 @@ $("createBtn").onclick=()=>requestRoom("createRoom",{name:$("playerName").value}
 $("joinBtn").onclick=()=>requestRoom("joinRoom",{code:$("roomCode").value,name:$("playerName").value});
 $("roomCode").oninput=e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,5);
 $("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText(`Join my Word Wheel Duel room ${roomCode}: ${location.origin}/?room=${roomCode}`);toast("Invite link copied!")}catch{toast("Share room code: "+roomCode)}};
-$("startBtn").onclick=()=>socket.emit("startMatch");$("spinBtn").onclick=()=>{if(!wheelBusy)socket.emit("spin")};$("nextBtn").onclick=()=>socket.emit("nextRound");$("newMatchBtn").onclick=()=>socket.emit("newMatch");
+$("startBtn").onclick=()=>socket.emit("startMatch");$("spinBtn").onclick=()=>{if(!wheelBusy){audio();socket.emit("spin")}};$("nextBtn").onclick=()=>socket.emit("nextRound");$("newMatchBtn").onclick=()=>socket.emit("newMatch");
 $("alphabet").onclick=e=>{let b=e.target.closest("[data-letter]");if(b)socket.emit("guessConsonant",{letter:b.dataset.letter})};
 $("vowelButtons").onclick=e=>{let b=e.target.closest("[data-vowel]");if(b)socket.emit("buyVowel",{letter:b.dataset.vowel})};
 $("solveForm").onsubmit=e=>{e.preventDefault();socket.emit("solve",{answer:$("solveInput").value});$("solveInput").value=""};
