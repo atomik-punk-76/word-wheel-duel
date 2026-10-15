@@ -45,5 +45,5 @@ $("solveInput").disabled=!(mine&&active);$("solveForm").querySelector("button").
 $("startBtn").classList.toggle("hidden",!(state.canStart&&state.hostIndex===mySeat));$("nextBtn").classList.toggle("hidden",!(state.status==="roundOver"&&state.hostIndex===mySeat));$("newMatchBtn").classList.toggle("hidden",!(state.status==="matchOver"&&state.hostIndex===mySeat));
 if(state.status==="matchOver")$("turnNote").textContent="Match complete.";
 let key=state.spin?`${state.round}:${state.spin.index}:${state.lastAction?.type}`:"";if(state.spin&&state.lastAction?.type==="spin"&&key!==lastSpinKey){lastSpinKey=key;let target=state.spin.index*(360/state.wheel.length);rotation+=1440+((360-target-rotation%360+360)%360);$("wheel").style.transform=`rotate(${rotation}deg)`;$("wheelResult").textContent=state.spin.label}else if(!state.turnValue)$("wheelResult").textContent=state.lastAction?.type==="guess"?`${state.lastAction.letter}: ${state.lastAction.count} found`:"Ready when you are"}
-}
+
 const q=new URLSearchParams(location.search).get("room");if(q)$("roomCode").value=q.toUpperCase();
