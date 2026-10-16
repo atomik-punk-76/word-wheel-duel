@@ -46,17 +46,26 @@ socket.on("disconnect",reason=>{conn("DISCONNECTED");$("lobbyError").textContent
 socket.on("connect_error",err=>{conn("CONNECTING…");$("lobbyError").textContent="Waking up the game server… this can take up to a minute. "+(err?.message?"("+err.message+")":"")});
 socket.on("connect",()=>{conn("CONNECTED",true);$("lobbyError").textContent=""});
 socket.io.on("reconnect_attempt",()=>conn("RECONNECTING"));
-socket.on("errorMessage",m=>{$("lobbyError").textContent=m;$("createBtn").disabled=false;$("joinBtn").disabled=false;note(m,"bad");sfx.buzzer()});
-socket.on("joined",d=>{roomCode=d.code;mySeat=d.seat;$("createBtn").disabled=false;$("joinBtn").disabled=false;$("lobby").classList.add("hidden");$("game").classList.remove("hidden");$("roomLabel").textContent=roomCode;history.replaceState(null,"",`?room=${roomCode}`);note("Joined room "+roomCode,"good");sfx.whoosh()});
+socket.on("errorMessage",m=>{$("lobbyError").textContent=m;nameOk(false);note(m,"bad");sfx.buzzer()});
+socket.on("joined",d=>{roomCode=d.code;mySeat=d.seat;$("createBtn").disabled=false;$("joinBtn").disabled=false;$("lobby").classList.add("hidden");$("game").classList.remove("hidden");document.body.classList.add("in-game");fitGame();$("roomLabel").textContent=roomCode;history.replaceState(null,"",`?room=${roomCode}`);note("Joined room "+roomCode,"good");sfx.whoosh()});
 socket.on("state",s=>{if(state&&s.revision<state.revision)return;prev=state;state=s;render()});
 function requestRoom(eventName,payload){
   $("lobbyError").textContent="";
   if(!socket.connected){$("lobbyError").textContent="Still connecting to the game server — give it a few seconds and try again.";return}
   $("createBtn").disabled=true;$("joinBtn").disabled=true;$("lobbyError").textContent="Connecting to room…";
-  socket.timeout(8000).emit(eventName,payload,err=>{if(err){$("createBtn").disabled=false;$("joinBtn").disabled=false;$("lobbyError").textContent="The server did not respond. Refresh the page and try again."}});
+  socket.timeout(8000).emit(eventName,payload,err=>{if(err){nameOk(false);$("lobbyError").textContent="The server did not respond. Refresh the page and try again."}});
 }
-$("createBtn").onclick=()=>{sfx.ui();requestRoom("createRoom",{name:$("playerName").value})};
-$("joinBtn").onclick=()=>{sfx.ui();requestRoom("joinRoom",{code:$("roomCode").value,name:$("playerName").value})};
+/* players must enter a name before creating or joining */
+function cleanName(){return $("playerName").value.replace(/[<>]/g,"").trim()}
+function nameOk(show){const ok=cleanName().length>0;$("playerName").classList.toggle("bad",!ok&&show);$("nameHint").classList.toggle("bad",!ok&&show);$("nameHint").textContent=ok?"Looking good, "+cleanName()+"!":"Enter a name to create or join a room.";$("createBtn").disabled=!ok;$("joinBtn").disabled=!ok;return ok}
+function needName(){if(nameOk(true))return false;sfx.buzzer();const n=$("playerName");n.classList.remove("shake");void n.offsetWidth;n.classList.add("shake");n.focus();return true}
+try{$("playerName").value=localStorage.getItem("wwd-name")||""}catch(e){}
+$("playerName").oninput=()=>nameOk(false);nameOk(false);
+document.querySelector(".lobby").addEventListener("pointerdown",e=>{if(e.target.closest(".join-row,.lobby-actions")&&!cleanName())needName()});
+function goName(){const n=cleanName();try{localStorage.setItem("wwd-name",n)}catch(e){}return n}
+$("createBtn").onclick=()=>{if(needName())return;sfx.ui();requestRoom("createRoom",{name:goName()})};
+$("joinBtn").onclick=()=>{if(needName())return;if(!$("roomCode").value){$("lobbyError").textContent="Enter the 5-letter room code.";return}sfx.ui();requestRoom("joinRoom",{code:$("roomCode").value,name:goName()})};
+$("playerName").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();$("roomCode").value?$("joinBtn").click():$("createBtn").click()}};
 $("roomCode").oninput=e=>e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,5);
 $("copyBtn").onclick=async()=>{try{await navigator.clipboard.writeText(`Join my Word Wheel Duel room ${roomCode}: ${location.origin}/?room=${roomCode}`);note("Invite link copied!","good")}catch{note("Share room code: "+roomCode)}sfx.ui()};
 function doSpin(){if(!wheelBusy&&!$("spinBtn").disabled){A.ensure();socket.emit("spin")}}
@@ -167,5 +176,23 @@ function animateSpin(){
     if(label==="BANKRUPT"){popup("BANKRUPT!","bankrupt");sfx.bankrupt()}else if(label==="LOSE TURN"){popup("LOSE A TURN","lose-turn");sfx.loseTurn()}else{popup("$"+Number(label).toLocaleString("en-US"),"cash");sfx.cash()}
     render()},duration+25);
 }
+
+/* ---------- fit to screen ---------- */
+let fitOn=true;try{fitOn=localStorage.getItem("wwd-fit")!=="off"}catch(e){}
+function setFitUI(){document.body.classList.toggle("fit",fitOn);$("fitBtn").setAttribute("aria-pressed",fitOn);$("fitBtn").title=fitOn?"Fit to screen: ON (click for normal scrolling)":"Fit to screen: OFF (click to fit everything on one screen)"}
+let fitting=false,lastFit="";
+function fitGame(){const g=$("game");if(!document.body.classList.contains("in-game"))return;
+  if(!fitOn){g.style.zoom="";g.style.width="";return}
+  fitting=true;const m=$("mainArea"),cs=getComputedStyle(m),W=m.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),H=m.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  // lay the game out at width L, measure its height, and zoom it so both fit; repeat a few times to settle
+  let z=1,L=Math.min(W,1280);
+  for(let i=0;i<5;i++){g.style.zoom="1";g.style.width=L+"px";const h=g.offsetHeight;const nz=Math.max(.3,Math.min(1,H/h,W/L));const nL=Math.min(W/nz,1280);if(Math.abs(nL-L)<2){z=nz;break}z=nz;L=nL}
+  g.style.zoom="1";g.style.width=L+"px";z=Math.max(.3,Math.min(1,H/g.offsetHeight,W/L));
+  g.style.zoom=String(z);lastFit=W+"x"+H;fitting=false}
+setFitUI();
+$("fitBtn").onclick=()=>{fitOn=!fitOn;try{localStorage.setItem("wwd-fit",fitOn?"on":"off")}catch(e){}setFitUI();fitGame();sfx.ui();note(fitOn?"Fit to screen ON":"Fit to screen OFF — scroll to see everything","info",1800)};
+addEventListener("resize",()=>requestAnimationFrame(fitGame));
+let fitTimer=null;new ResizeObserver(()=>{if(fitting)return;clearTimeout(fitTimer);fitTimer=setTimeout(fitGame,60)}).observe($("puzzle"));
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitGame);
 
 const q=new URLSearchParams(location.search).get("room");if(q)$("roomCode").value=q.toUpperCase();

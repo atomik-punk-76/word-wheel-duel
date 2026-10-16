@@ -26,6 +26,7 @@
       <div class="np-text"><small>NOW PLAYING</small><span id="trackName">Music off</span></div>
       <button id="musicNext" class="icon-btn" aria-label="Next song">⏭</button>
     </div>
+    <button id="fitBtn" class="icon-btn big" aria-label="Fit game to screen" aria-pressed="true" title="Fit to screen">⛶</button>
     <button id="settingsBtn" class="icon-btn big" aria-label="Sound settings" aria-expanded="false">🔊</button>
     <div id="connection" class="connection"><i></i><span>CONNECTING</span></div>
   </div>
@@ -38,13 +39,13 @@
   </div>
 </header>
 
-<main>
+<main id="mainArea">
 <section id="lobby" class="lobby panel">
   <div class="eyebrow">TWO PLAYERS · ONE PUZZLE · BIG BRAIN ENERGY</div>
   <h1>Spin. Guess.<br><em>Outsmart.</em></h1>
   <p class="intro">Take turns spinning the wheel, calling letters, and solving the phrase. Invite a friend from anywhere.</p>
   <label for="playerName">YOUR CONTESTANT NAME</label>
-  <input id="playerName" maxlength="18" placeholder="Enter your name" value="Player 1">
+  <input id="playerName" maxlength="18" placeholder="Type your name to play" autocomplete="nickname" required><div id="nameHint" class="name-hint">Enter a name to create or join a room.</div>
   <div class="lobby-actions">
     <button id="createBtn" class="primary">CREATE PRIVATE ROOM <span>↗</span></button>
     <div class="join-row"><input id="roomCode" maxlength="5" placeholder="ROOM CODE"><button id="joinBtn" class="secondary">JOIN ROOM</button></div>

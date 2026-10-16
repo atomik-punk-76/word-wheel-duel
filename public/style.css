@@ -226,3 +226,39 @@ footer span{color:var(--gold)}
   .join-row{flex-direction:column}
 }
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}.sunburst{animation:none}}
+
+/* name requirement */
+.name-hint{font-size:12px;color:var(--muted);margin-top:6px;transition:color .2s}
+.name-hint.bad{color:#ff8a8a;font-weight:700}
+#playerName.bad{border-color:var(--bad);box-shadow:0 0 0 4px rgba(255,59,59,.18)}
+#fitBtn[aria-pressed="true"]{background:rgba(255,201,60,.22);border-color:var(--gold);color:var(--gold)}
+
+/* compact, one-screen game layout */
+body.in-game footer{display:none}
+body.in-game main{padding-top:10px;padding-bottom:10px}
+body.in-game .room-strip{margin-bottom:8px}
+body.in-game .turn-banner{padding:8px;margin-bottom:10px;font-size:clamp(18px,2.6vw,28px)}
+body.in-game .score-row{margin-bottom:12px}
+body.in-game .contestant{padding:12px 18px}
+body.in-game .avatar{width:52px;height:52px;font-size:24px}
+body.in-game .round-cash{font-size:clamp(32px,4.2vw,48px)}
+body.in-game .wheel-side,body.in-game .puzzle-side{padding:14px 16px}
+body.in-game .wheel-side{gap:8px}
+body.in-game .wheel-wrap{margin-top:6px}
+body.in-game .value-display strong{font-size:clamp(30px,3.8vw,42px)}
+body.in-game .action-btn{padding:14px;font-size:18px}
+body.in-game .category{margin-bottom:10px;font-size:16px;padding:6px 16px}
+body.in-game .board-frame{padding:10px}
+body.in-game .puzzle{min-height:100px}
+body.in-game .message{margin:10px 0;padding:9px 14px;font-size:15px}
+body.in-game .letter,body.in-game .vowel{height:38px}
+body.in-game .vowels{margin-top:8px}
+body.in-game .solve-form{margin-top:10px}
+body.in-game .solve-form .primary{padding:12px 20px}
+body.in-game #solveInput{padding:11px 14px}
+body.in-game .bottom-row{margin-top:10px;padding:8px 14px}
+body.in-game .letter-result.show{padding:5px 14px}
+/* fit-to-screen: the game is zoomed (by app.js) so it exactly fits the window */
+body.fit.in-game{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+body.fit.in-game main{flex:1;min-height:0;max-width:none;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:flex-start}
+body.fit.in-game #game{width:var(--fit-w,1280px);max-width:none;flex:none;transform-origin:top center}
