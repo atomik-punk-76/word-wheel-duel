@@ -262,3 +262,13 @@ body.in-game .letter-result.show{padding:5px 14px}
 body.fit.in-game{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
 body.fit.in-game main{flex:1;min-height:0;max-width:none;width:100%;overflow:hidden;display:flex;justify-content:center;align-items:flex-start}
 body.fit.in-game #game{width:var(--fit-w,1280px);max-width:none;flex:none;transform-origin:top center}
+
+/* solve button */
+.solve-area{margin-top:14px}
+body.in-game .solve-area{margin-top:10px}
+.solve-open{width:100%;border:none;border-radius:14px;padding:13px;font-family:var(--display);font-size:18px;letter-spacing:1.5px;color:#fff;background:linear-gradient(90deg,var(--violet),var(--pink));box-shadow:0 5px 0 #7a1f4c,0 10px 24px rgba(255,79,139,.3);transition:transform .15s,filter .2s}
+.solve-open:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
+.solve-open:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #7a1f4c}
+.solve-open:disabled{filter:grayscale(.85) brightness(.55);box-shadow:none;cursor:not-allowed}
+.solve-area .solve-form{margin-top:0;animation:pop .25s cubic-bezier(.2,1.4,.4,1)}
+.solve-form .tiny{align-self:center}

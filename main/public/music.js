@@ -193,8 +193,20 @@ music.select=i=>{const was=music.playing;if(was){clearInterval(timer);music.play
 music.next=()=>music.select(music.current+1);
 music.wantsAutoplay=()=>prefs.musicOn!==false;
 
+/* ---------------- announcer voice clips (play through the sound-effects volume) ---------------- */
+const CLIPS={solveCorrect:"/sfx/solve-correct.mp3",wrongLetter:"/sfx/wrong-letter.mp3",solveWrong:"/sfx/solve-wrong.mp3",solvePress:"/sfx/solve-press.mp3",gameStart:"/sfx/game-start.mp3"};
+const clipBufs={},clipLoads={};let activeClip=null;
+function loadClip(name){if(clipBufs[name])return Promise.resolve(clipBufs[name]);if(clipLoads[name])return clipLoads[name];if(!ensure()||!CLIPS[name])return Promise.resolve(null);
+  clipLoads[name]=fetch(CLIPS[name]).then(r=>r.arrayBuffer()).then(b=>new Promise((ok,no)=>ctx.decodeAudioData(b,ok,no))).then(buf=>clipBufs[name]=buf).catch(()=>{delete clipLoads[name];return null});return clipLoads[name]}
+function preloadClips(){Object.keys(CLIPS).forEach(loadClip)}
+function playClip(name,delay=0){const c=ensure();if(!c)return;loadClip(name).then(buf=>{if(!buf)return;
+  if(activeClip){try{activeClip.stop()}catch(e){}}
+  const src=ctx.createBufferSource(),g=ctx.createGain();src.buffer=buf;g.gain.value=1.6;src.connect(g);g.connect(sfxBus);const t=ctx.currentTime+delay;src.start(t);activeClip=src;
+  // duck the music under the announcer
+  if(music.playing){const lvl=curve(prefs.music)*.75;musicBus.gain.cancelScheduledValues(t);musicBus.gain.setTargetAtTime(lvl*.3,t,.08);musicBus.gain.setTargetAtTime(lvl,t+buf.duration,.4)}
+  src.onended=()=>{if(activeClip===src)activeClip=null}})}
 window.WWAudio={
-  ensure,sfx:SFX,music,prefs,
+  ensure,sfx:SFX,music,prefs,clip:playClip,preloadClips,
   setSfxVolume(v){prefs.sfx=+v;savePrefs();if(sfxBus)sfxBus.gain.setTargetAtTime(curve(v),ctx.currentTime,.03)},
   setMusicVolume(v){prefs.music=+v;savePrefs();if(musicBus&&music.playing)musicBus.gain.setTargetAtTime(curve(v)*.75,ctx.currentTime,.03)}
 };

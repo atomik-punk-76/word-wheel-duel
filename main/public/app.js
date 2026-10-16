@@ -1,7 +1,7 @@
 "use strict";
 const socket=io({transports:["polling"],upgrade:false,timeout:10000,reconnection:true,reconnectionAttempts:Infinity,reconnectionDelay:1000,reconnectionDelayMax:5000}),$=id=>document.getElementById(id);
 let state=null,prev=null,mySeat=null,roomCode=null,rotation=0,spinAnimId=null,wheelBusy=false,lastFeedbackId=null,feedbackTimer=null,lastSettleId=null;
-const A=window.WWAudio||{sfx:new Proxy({},{get:()=>()=>{}}),music:{play(){},pause(){},toggle(){},next(){},select(){},songs:[],wantsAutoplay:()=>false},prefs:{sfx:70,music:45},ensure(){},setSfxVolume(){},setMusicVolume(){}};
+const A=window.WWAudio||{sfx:new Proxy({},{get:()=>()=>{}}),music:{play(){},pause(){},toggle(){},next(){},select(){},songs:[],wantsAutoplay:()=>false},prefs:{sfx:70,music:45},ensure(){},setSfxVolume(){},setMusicVolume(){},clip(){},preloadClips(){}};
 const sfx=A.sfx;
 const money=n=>"$"+Number(n||0).toLocaleString("en-US");
 const COLORS=["#ff4f8b","#ffc93c","#19d3c5","#9b5cff","#ff9f1c","#3ee08f","#3a8cff","#ff6b4a","#e85cff"];
@@ -37,7 +37,7 @@ $("musicNext").onclick=()=>{A.music.next();if(!A.music.playing)A.music.play()};
 $("settingsBtn").onclick=e=>{e.stopPropagation();const p=$("settingsPanel"),open=p.classList.toggle("hidden")===false;$("settingsBtn").setAttribute("aria-expanded",open);if(open)sfx.ui()};
 document.addEventListener("click",e=>{if(!e.target.closest("#settingsPanel,#settingsBtn"))$("settingsPanel").classList.add("hidden")});
 let audioUnlocked=false;
-document.addEventListener("pointerdown",()=>{if(audioUnlocked)return;audioUnlocked=true;A.ensure();if(A.music.wantsAutoplay())A.music.play();syncMusicUI()},{capture:true});
+document.addEventListener("pointerdown",()=>{if(audioUnlocked)return;audioUnlocked=true;A.ensure();A.preloadClips();if(A.music.wantsAutoplay())A.music.play();syncMusicUI()},{capture:true});
 syncMusicUI();
 
 /* ---------- connection ---------- */
@@ -73,7 +73,12 @@ $("spinBtn").onclick=doSpin;document.querySelector(".hub").onclick=doSpin;
 $("startBtn").onclick=()=>{sfx.ui();socket.emit("startMatch")};$("nextBtn").onclick=()=>{sfx.ui();socket.emit("nextRound")};$("newMatchBtn").onclick=()=>{sfx.ui();socket.emit("newMatch")};
 $("alphabet").onclick=e=>{const b=e.target.closest("[data-letter]");if(b&&!b.disabled){sfx.click();socket.emit("guessConsonant",{letter:b.dataset.letter})}};
 $("vowelButtons").onclick=e=>{const b=e.target.closest("[data-vowel]");if(b&&!b.disabled){sfx.click();socket.emit("buyVowel",{letter:b.dataset.vowel})}};
-$("solveForm").onsubmit=e=>{e.preventDefault();const v=$("solveInput").value.trim();if(!v)return;socket.emit("solve",{answer:v});$("solveInput").value=""};
+/* solving: press SOLVE THE PUZZLE (announcer plays for both players), then type and lock it in */
+function showSolve(open){$("solveForm").classList.toggle("hidden",!open);$("solveOpenBtn").classList.toggle("hidden",open);if(open)setTimeout(()=>$("solveInput").focus(),50);else $("solveInput").value=""}
+$("solveOpenBtn").onclick=()=>{if($("solveOpenBtn").disabled)return;A.ensure();socket.emit("solveIntent");showSolve(true)};
+$("solveCancel").onclick=()=>{showSolve(false);sfx.ui()};
+$("solveForm").onsubmit=e=>{e.preventDefault();const v=$("solveInput").value.trim();if(!v)return;socket.emit("solve",{answer:v});showSolve(false)};
+socket.on("announce",d=>{if(d?.type==="solvePress")A.clip("solvePress")});
 document.addEventListener("keydown",e=>{if(e.target.tagName==="INPUT"||!state||state.status!=="playing"||state.turn!==mySeat)return;const k=e.key.toUpperCase();if(k===" "&&!state.turnValue){e.preventDefault();doSpin();return}const b=document.querySelector(`[data-letter="${k}"],[data-vowel="${k}"]`);if(b&&!b.disabled)b.click()});
 
 /* ---------- wheel ---------- */
@@ -139,7 +144,7 @@ function render(){if(!state)return;
   $("turnNote").textContent=state.status==="lobby"?(state.players.length<2?"Share the room code with a friend to begin.":"Both players ready. Host can start."):state.status==="matchOver"?"Match complete.":(mine?"Tip: press SPACE to spin, or type a letter.":`${who} is playing…`);
   document.querySelectorAll("[data-letter]").forEach(b=>{const used=state.guessed.includes(b.dataset.letter);b.classList.toggle("used",used);b.disabled=!(mine&&active&&state.turnValue)||used});
   document.querySelectorAll("[data-vowel]").forEach(b=>{const used=state.guessed.includes(b.dataset.vowel);b.classList.toggle("used",used);b.disabled=!(mine&&active&&!state.turnValue&&!state.spin&&state.players[mySeat]?.roundScore>=250)||used});
-  $("solveInput").disabled=!(mine&&active&&!state.spin);$("solveForm").querySelector("button").disabled=!(mine&&active&&!state.spin);
+  const canSolve=mine&&active&&!state.spin&&!wheelBusy;$("solveOpenBtn").disabled=!canSolve;if(!canSolve)showSolve(false);
   $("startBtn").classList.toggle("hidden",!(state.canStart&&state.hostIndex===mySeat));$("nextBtn").classList.toggle("hidden",!(state.status==="roundOver"&&state.hostIndex===mySeat));$("newMatchBtn").classList.toggle("hidden",!(state.status==="matchOver"&&state.hostIndex===mySeat));
   // value display
   const vd=$("wheelResult");if(!wheelBusy){vd.className="";if(state.turnValue)vd.textContent=money(state.turnValue);else if(state.lastAction?.type==="spin"&&!state.spin&&/BANKRUPT|LOSE TURN/.test(state.lastAction.label)){vd.textContent=state.lastAction.label;vd.className=state.lastAction.label==="BANKRUPT"?"bankrupt":"lose"}else vd.textContent="—"}
@@ -150,7 +155,7 @@ function render(){if(!state)return;
   if(prev&&prev.players.length<2&&state.players.length===2&&state.status==="lobby"){note(state.players[1-mySeat]?.name+" joined the room!","good");sfx.yourTurn()}
   if(prev&&prev.players.length===2&&state.players.length<2){note("Your opponent left the room.","bad")}
   // match start / new round
-  if(prev&&(prev.status!=="playing"||prev.round!==state.round)&&active){popup(`ROUND ${state.round}`,"announce",1500);sfx.whoosh()}
+  if(prev&&(prev.status!=="playing"||prev.round!==state.round)&&active){popup(`ROUND ${state.round}`,"announce",1500);if(prev.status==="lobby"||prev.status==="matchOver")A.clip("gameStart");else sfx.whoosh()}
   // turn change
   else if(prev&&active&&prev.status==="playing"&&prev.turn!==state.turn){if(mine){popup("YOUR TURN!","announce",1500);setTimeout(()=>sfx.yourTurn(),popBusy?900:0)}else{note(`${who}'s turn`,"info",2000);sfx.theirTurn()}}
   // guess / vowel / solve feedback
@@ -158,9 +163,9 @@ function render(){if(!state)return;
     lastFeedbackId=state.lastAction.id;const act=state.lastAction,wrong=act.count===0||act.correct===false,lr=$("letterResult");
     lr.textContent=wrong?(act.letter?`NO ${act.letter}'s`:"INCORRECT!"):(act.letter?`${act.count} ${act.letter}${act.count>1?"'s":""}${act.type==="guess"&&prev?.turnValue?" · +"+money(prev.turnValue*act.count):""}`:"SOLVED!");
     lr.classList.toggle("wrong",wrong);lr.classList.add("show");clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>lr.classList.remove("show"),2400);
-    if(wrong){sfx.buzzer();const bf=document.querySelector(".board-frame");bf.classList.remove("shake");void bf.offsetWidth;bf.classList.add("shake")}else if(act.type==="guess"&&prev?.turnValue)setTimeout(()=>sfx.cash(),Math.min(reveals,12)*280)}
+    if(wrong){A.clip(act.type==="solve"?"solveWrong":"wrongLetter");const bf=document.querySelector(".board-frame");bf.classList.remove("shake");void bf.offsetWidth;bf.classList.add("shake")}else if(act.type==="guess"&&prev?.turnValue)setTimeout(()=>sfx.cash(),Math.min(reveals,12)*280)}
   // round / match over
-  if(prev&&prev.status==="playing"&&state.status==="roundOver"){const w=state.winner,wn=w!=null?state.players[w]?.name:null;popup(w===mySeat?"YOU WIN THE ROUND!":wn?`${wn.toUpperCase()} WINS THE ROUND`:"ROUND OVER","winner",2600);if(w===mySeat){sfx.fanfare(false);confetti()}else sfx.theirTurn()}
+  if(prev&&prev.status==="playing"&&state.status==="roundOver"){const w=state.winner,wn=w!=null?state.players[w]?.name:null;popup(w===mySeat?"YOU WIN THE ROUND!":wn?`${wn.toUpperCase()} WINS THE ROUND`:"ROUND OVER","winner",2600);const solved=state.lastAction?.type==="solve"&&state.lastAction.correct;if(solved)A.clip("solveCorrect");else if(w===mySeat)sfx.fanfare(false);else sfx.theirTurn();if(w===mySeat)confetti()}
   if(prev&&prev.status!=="matchOver"&&state.status==="matchOver"){const a=state.players[0]?.score??0,b=state.players[1]?.score??0,w=a===b?null:(a>b?0:1);popup(w===null?"IT'S A TIE!":w===mySeat?"YOU WIN THE MATCH!":`${state.players[w].name.toUpperCase()} WINS!`,"winner",3200);if(w===mySeat||w===null){sfx.fanfare(true);confetti(280)}}
   prev=state;// later re-renders of the same state must not replay effects
 }
