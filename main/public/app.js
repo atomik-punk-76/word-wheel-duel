@@ -196,7 +196,7 @@ function render(){if(!state)return;
   // value display
   const vd=$("wheelResult");if(!wheelBusy&&!inFinal){vd.className="";if(state.turnValue)vd.textContent=money(state.turnValue);else if(state.lastAction?.type==="spin"&&!state.spin&&/BANKRUPT|LOSE TURN/.test(state.lastAction.label)){vd.textContent=state.lastAction.label;vd.className=state.lastAction.label==="BANKRUPT"?"bankrupt":"lose"}else vd.textContent="—"}
   // wheel
-  if($("wheel").dataset.ready!=="yes")buildWheel(state.wheel.map(w=>w.label));
+  {const labels=state.wheel.map(w=>w.label),key=labels.join("|");if($("wheel").dataset.key!==key&&!wheelBusy){const first=!$("wheel").dataset.key;buildWheel(labels);$("wheel").dataset.key=key;if(!first){const ww=document.querySelector(".wheel-wrap");ww.classList.remove("restock");void ww.offsetWidth;ww.classList.add("restock")}}}
   if(state.spin&&state.spin.id!==spinAnimId)animateSpin();
   // player joined
   if(prev&&prev.players.length<2&&state.players.length===2&&state.status==="lobby"){note(state.players[1-mySeat]?.name+" joined the room!","good");sfx.yourTurn()}

@@ -294,3 +294,11 @@ body.final-mode .board-frame{border-color:var(--gold);box-shadow:inset 0 0 30px 
 body.final-mode .category{background:linear-gradient(90deg,var(--amber),var(--gold));color:var(--ink)}
 body.final-mode .category::before{content:"★ FINAL ROUND · "}
 body.final-mode .round-chip{background:var(--gold);color:var(--ink)}
+
+/* bigger bank total */
+.bank-line{display:flex;align-items:baseline;gap:6px;margin-top:4px}
+.contestant.right .bank-line{justify-content:flex-end}
+.bank-line b{font-family:var(--display);font-size:clamp(22px,2.6vw,30px);color:#fff;letter-spacing:.5px;margin-left:2px;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+/* wheel values go up between rounds */
+.wheel-wrap.restock .wheel svg{animation:restock .9s cubic-bezier(.2,1.4,.4,1)}
+@keyframes restock{0%{filter:brightness(2.2) saturate(1.6)}100%{filter:none}}
