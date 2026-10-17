@@ -272,3 +272,25 @@ body.in-game .solve-area{margin-top:10px}
 .solve-open:disabled{filter:grayscale(.85) brightness(.55);box-shadow:none;cursor:not-allowed}
 .solve-area .solve-form{margin-top:0;animation:pop .25s cubic-bezier(.2,1.4,.4,1)}
 .solve-form .tiny{align-self:center}
+
+/* spin countdown */
+.action-btn{position:relative;overflow:hidden}
+.spin-count{display:inline-block;margin-left:10px;min-width:1.5em;padding:0 6px;border-radius:8px;background:rgba(27,15,46,.2)}
+.spin-count:empty{display:none}
+.action-btn.timed::after{content:"";position:absolute;left:0;bottom:0;height:6px;width:calc(var(--tleft,1) * 100%);background:rgba(27,15,46,.45);transition:width .1s linear}
+.action-btn.urgent{background:linear-gradient(180deg,#ff9a9a,#ff3b3b 50%,#c41d1d);color:#fff;box-shadow:0 6px 0 #7a0a0a,0 0 40px rgba(255,59,59,.85);animation:urgent .5s ease-in-out infinite alternate!important}
+.action-btn.urgent:disabled{filter:none;opacity:.92}
+.action-btn.urgent .spin-count{background:rgba(0,0,0,.3)}
+@keyframes urgent{to{box-shadow:0 6px 0 #7a0a0a,0 0 70px 12px rgba(255,59,59,1);transform:scale(1.03)}}
+.value-display strong.urgent{color:#ff5c5c;text-shadow:0 3px 0 #7a0a0a,0 0 24px rgba(255,59,59,.8);animation:throb .5s infinite}
+.value-display strong.calm{color:var(--teal);text-shadow:0 3px 0 #0a5a55}
+
+/* final round */
+.letter.picked,.vowel.picked{background:linear-gradient(180deg,#fff6c2,var(--gold));box-shadow:0 4px 0 #b8640a,0 0 18px rgba(255,201,60,.85);transform:translateY(-3px);opacity:1!important;text-decoration:none}
+.letter.given{background:linear-gradient(180deg,#bff7f1,var(--teal));opacity:.55!important;text-decoration:none}
+.final-lock{background:linear-gradient(90deg,var(--amber),var(--gold));color:var(--ink);box-shadow:0 5px 0 #b8640a,0 0 30px rgba(255,201,60,.4)}
+.final-lock:not(:disabled){animation:ready 1.2s infinite}
+body.final-mode .board-frame{border-color:var(--gold);box-shadow:inset 0 0 30px rgba(0,0,0,.6),0 0 0 3px #08302d,0 0 40px rgba(255,201,60,.45)}
+body.final-mode .category{background:linear-gradient(90deg,var(--amber),var(--gold));color:var(--ink)}
+body.final-mode .category::before{content:"★ FINAL ROUND · "}
+body.final-mode .round-chip{background:var(--gold);color:var(--ink)}

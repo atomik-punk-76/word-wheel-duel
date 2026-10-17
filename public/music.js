@@ -46,6 +46,10 @@ const SFX={
   yourTurn(){const c=ensure();if(!c)return;const t=c.currentTime;[523.25,659.25,783.99,1046.5].forEach((f,i)=>osc("triangle",f,t+i*.08,.35,.1,sfxBus,{wet:.25}))},
   theirTurn(){const c=ensure();if(!c)return;const t=c.currentTime;osc("sine",587,t,.2,.06,sfxBus);osc("sine",440,t+.12,.3,.06,sfxBus)},
   fanfare(big){const c=ensure();if(!c)return;const t=c.currentTime;const seq=big?[[523,0],[659,.12],[784,.24],[1047,.36],[784,.6],[1047,.72],[1319,.84]]:[[523,0],[659,.1],[784,.2],[1047,.32]];seq.forEach(([f,d])=>{osc("sawtooth",f,t+d,.35,.06,sfxBus,{wet:.3});osc("square",f/2,t+d,.3,.04,sfxBus)});const end=seq[seq.length-1][1];[1047,1319,1568].forEach(f=>osc("triangle",f,t+end+.15,1.4,.07,sfxBus,{wet:.4}));noise(t+end+.15,1.2,"highpass",7000,1,.08,sfxBus)},
+  clockTick(){const c=ensure();if(!c)return;const t=c.currentTime;osc("sine",1900,t,.05,.16,sfxBus);noise(t,.03,"bandpass",2600,8,.22,sfxBus)},
+  clockTock(){const c=ensure();if(!c)return;const t=c.currentTime;osc("sine",1250,t,.07,.16,sfxBus);noise(t,.04,"bandpass",1500,8,.22,sfxBus)},
+  timeUp(){const c=ensure();if(!c)return;const t=c.currentTime;osc("square",880,t,.12,.09,sfxBus);osc("square",880,t+.16,.12,.09,sfxBus);osc("square",880,t+.32,.35,.09,sfxBus)},
+  drumroll(sec=2.6){const c=ensure();if(!c)return;const t=c.currentTime,n=Math.floor(sec*22);for(let i=0;i<n;i++)noise(t+i/22,.06,"bandpass",1700,1,.05+.11*i/n,sfxBus);osc("sine",90,t+sec,.6,.25,sfxBus,{to:45});noise(t+sec,.9,"highpass",5000,1,.16,sfxBus)},
   whoosh(){const c=ensure();if(!c)return;const t=c.currentTime;const s=ctx.createBufferSource();s.buffer=noiseBuf;const f=ctx.createBiquadFilter();f.type="bandpass";f.Q.value=2;f.frequency.setValueAtTime(400,t);f.frequency.exponentialRampToValueAtTime(3000,t+.35);const g=ctx.createGain();env(g,t,.1,.12,.0001,.45);s.connect(f);f.connect(g);g.connect(sfxBus);s.start(t);s.stop(t+.5)}
 };
 
@@ -186,7 +190,7 @@ function scheduleStep(t){
   if(outro&&s===0)rhodes(root+12,tt,spb*4,.6);
 }
 function tick(){if(!ctx)return;while(nextTime<ctx.currentTime+.15){scheduleStep(nextTime);const song=SONGS[music.current];nextTime+=60/song.bpm/4;stepIdx++}}
-music.play=function(){if(!ensure())return;if(music.playing)return;if(!built)startSong(music.current);nextTime=ctx.currentTime+.1;music.playing=true;prefs.musicOn=true;savePrefs();timer=setInterval(tick,25);musicBus.gain.cancelScheduledValues(ctx.currentTime);musicBus.gain.setTargetAtTime(curve(prefs.music)*.75,ctx.currentTime,.1);music.onChange&&music.onChange()};
+music.play=function(){if(!ensure())return;if(music.playing||suspense.active)return;if(!built)startSong(music.current);nextTime=ctx.currentTime+.1;music.playing=true;prefs.musicOn=true;savePrefs();timer=setInterval(tick,25);musicBus.gain.cancelScheduledValues(ctx.currentTime);musicBus.gain.setTargetAtTime(curve(prefs.music)*.75,ctx.currentTime,.1);music.onChange&&music.onChange()};
 music.pause=function(){if(!music.playing)return;music.playing=false;prefs.musicOn=false;savePrefs();clearInterval(timer);timer=null;if(ctx){musicBus.gain.setTargetAtTime(.0001,ctx.currentTime,.08);setTimeout(()=>{if(!music.playing&&musicBus)musicBus.gain.value=curve(prefs.music)*.75},600)}music.onChange&&music.onChange()};
 music.toggle=()=>music.playing?music.pause():music.play();
 music.select=i=>{const was=music.playing;if(was){clearInterval(timer);music.playing=false}startSong(i);if(was)music.play()};
@@ -205,8 +209,38 @@ function playClip(name,delay=0){const c=ensure();if(!c)return;loadClip(name).the
   // duck the music under the announcer
   if(music.playing){const lvl=curve(prefs.music)*.75;musicBus.gain.cancelScheduledValues(t);musicBus.gain.setTargetAtTime(lvl*.3,t,.08);musicBus.gain.setTargetAtTime(lvl,t+buf.duration,.4)}
   src.onended=()=>{if(activeClip===src)activeClip=null}})}
+/* ---------------- final-round suspense build ---------------- */
+const suspense={active:false};let sTimer=null,sStart=0,sLen=30,sNext=0,sStep=0,sDrone=[],sHadMusic=false;
+function suspenseStart(seconds){const c=ensure();if(!c||suspense.active)return;suspense.active=true;sLen=seconds||30;
+  sHadMusic=music.playing;if(sHadMusic){clearInterval(timer);timer=null;music.playing=false;music.onChange&&music.onChange()}
+  musicBus.gain.cancelScheduledValues(c.currentTime);musicBus.gain.setValueAtTime(curve(prefs.music)*.75,c.currentTime);
+  sStart=c.currentTime+.05;sNext=sStart;sStep=0;
+  // dissonant drone that opens up and swells over the whole cue
+  const lp=ctx.createBiquadFilter();lp.type="lowpass";lp.Q.value=6;lp.frequency.setValueAtTime(160,sStart);lp.frequency.exponentialRampToValueAtTime(2400,sStart+sLen);
+  const g=ctx.createGain();g.gain.setValueAtTime(.0001,sStart);g.gain.exponentialRampToValueAtTime(.09,sStart+3);g.gain.linearRampToValueAtTime(.16,sStart+sLen);lp.connect(g);out(g,musicBus,.4);
+  [33,34,45,40].forEach((n,k)=>{const o=ctx.createOscillator();o.type="sawtooth";o.frequency.value=mtof(n);o.detune.value=k*4-6;o.connect(lp);o.start(sStart);sDrone.push(o)});
+  const riser=ctx.createOscillator(),rg=ctx.createGain();riser.type="sine";riser.frequency.setValueAtTime(mtof(57),sStart+sLen*.55);riser.frequency.exponentialRampToValueAtTime(mtof(81),sStart+sLen);rg.gain.setValueAtTime(.0001,sStart);rg.gain.setValueAtTime(.0001,sStart+sLen*.55);rg.gain.exponentialRampToValueAtTime(.05,sStart+sLen);riser.connect(rg);out(rg,musicBus,.5);riser.start(sStart);sDrone.push(riser);
+  sDrone.push({stop:t=>{g.gain.cancelScheduledValues(t);g.gain.setTargetAtTime(.0001,t,.15);rg.gain.cancelScheduledValues(t);rg.gain.setTargetAtTime(.0001,t,.1)}});
+  sTimer=setInterval(suspenseTick,25)}
+function suspenseTick(){if(!suspense.active)return;while(sNext<ctx.currentTime+.15){const k=Math.min(1,(sNext-sStart)/sLen),bpm=84+80*k*k,step=60/bpm/4,s=sStep%16,t=sNext;
+    // heartbeat
+    if(s===0)kick(t,.7+.3*k);if(s===3)kick(t,.45+.3*k);
+    // pulsing low strings, adding the octave and a tense minor-second later on
+    if(s%2===0){pluck(45,t,step*2,.55+.4*k);if(k>.35)pluck(57,t,step*1.6,.4*k);if(k>.7&&s%4===2)pluck(58,t,step*1.5,.5*k)}
+    if(k>.5)hat(t,.3+.6*k,false);
+    if(k>.25&&s===8)snare(t,.25+.4*k);
+    if(k>.82&&s%2===1)snare(t,.12+.35*k);
+    if(s===0&&sStep%64===0&&k>.1)pad([57,60,63],t,step*16,.012+.012*k,700+1600*k);
+    sNext+=step;sStep++}}
+function suspenseStop(result){if(!suspense.active)return;suspense.active=false;clearInterval(sTimer);sTimer=null;const t=ctx.currentTime;
+  sDrone.forEach(o=>{try{o.stop(t+.4)}catch(e){}});sDrone=[];
+  if(result==="win"){pad([60,64,67,72],t+.05,2.6,.03,3000);[48,55,60].forEach(n=>bass(n,t+.05,1.4,1));kick(t+.05,1);snare(t+.05,1);rhodes(72,t+.05,2,1);rhodes(76,t+.1,2,1);rhodes(79,t+.15,2,1)}
+  else if(result==="lose"){[[46,0],[45,.45],[44,.9],[43,1.35]].forEach(([n,d])=>{bass(n,t+d,.5,1);pluck(n+12,t+d,.4,.8)});kick(t+1.35,1)}
+  if(sHadMusic)setTimeout(()=>{if(!suspense.active)music.play()},result?3800:400)}
+suspense.start=suspenseStart;suspense.stop=suspenseStop;
+
 window.WWAudio={
-  ensure,sfx:SFX,music,prefs,clip:playClip,preloadClips,
+  ensure,sfx:SFX,music,prefs,clip:playClip,preloadClips,suspense,
   setSfxVolume(v){prefs.sfx=+v;savePrefs();if(sfxBus)sfxBus.gain.setTargetAtTime(curve(v),ctx.currentTime,.03)},
   setMusicVolume(v){prefs.music=+v;savePrefs();if(musicBus&&music.playing)musicBus.gain.setTargetAtTime(curve(v)*.75,ctx.currentTime,.03)}
 };

@@ -95,9 +95,9 @@
         <div id="wheel" class="wheel"></div>
         <div class="hub" aria-hidden="true"><span>SPIN</span></div>
       </div>
-      <div class="value-display"><small>CURRENT VALUE</small><strong id="wheelResult">—</strong></div>
+      <div class="value-display"><small id="valueLabel">CURRENT VALUE</small><strong id="wheelResult">—</strong></div>
       <div id="letterResult" class="letter-result" aria-live="polite"></div>
-      <button id="spinBtn" class="primary action-btn">SPIN THE WHEEL ↻</button>
+      <button id="spinBtn" class="primary action-btn"><span id="spinLabel">SPIN THE WHEEL ↻</span><span id="spinCount" class="spin-count"></span></button>
       <div class="turn-note" id="turnNote">Waiting for match to start…</div>
     </div>
 
@@ -106,11 +106,11 @@
       <div class="board-frame"><div id="puzzle" class="puzzle"></div></div>
       <div class="message" id="message">Waiting for another player…</div>
       <div class="letter-controls">
-        <div class="control-label">CONSONANTS <span id="turnValue">SPIN FIRST</span></div>
+        <div class="control-label"><span id="consLabel">CONSONANTS</span> <span id="turnValue">SPIN FIRST</span></div>
         <div class="alphabet" id="alphabet"></div>
-        <div class="vowels"><span>BUY A VOWEL · $250</span><div id="vowelButtons"></div></div>
+        <div class="vowels"><span id="vowelLabel">BUY A VOWEL · $250</span><div id="vowelButtons"></div></div>
       </div>
-      <div class="solve-area"><button id="solveOpenBtn" class="solve-open" type="button">🏆 SOLVE THE PUZZLE</button><form id="solveForm" class="solve-form hidden"><input id="solveInput" placeholder="Type the whole puzzle…" autocomplete="off"><button class="primary" type="submit">LOCK IT IN</button><button id="solveCancel" class="tiny" type="button">CANCEL</button></form></div>
+      <div class="solve-area"><button id="finalLockBtn" class="solve-open final-lock hidden" type="button">LOCK IN MY LETTERS</button><button id="solveOpenBtn" class="solve-open" type="button">🏆 SOLVE THE PUZZLE</button><form id="solveForm" class="solve-form hidden"><input id="solveInput" placeholder="Type the whole puzzle…" autocomplete="off"><button class="primary" type="submit">LOCK IT IN</button><button id="solveCancel" class="tiny" type="button">CANCEL</button></form></div>
     </div>
   </div>
 
