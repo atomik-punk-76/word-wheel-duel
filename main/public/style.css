@@ -1,5 +1,5 @@
 :root{
-  --bg:#150a29;--bg2:#24103f;--panel:rgba(38,18,68,.82);--panel-line:rgba(255,201,60,.22);
+  --p2:#ffb02e;--bg:#150a29;--bg2:#24103f;--panel:rgba(38,18,68,.82);--panel-line:rgba(255,201,60,.22);
   --gold:#ffc93c;--amber:#ff9f1c;--pink:#ff4f8b;--teal:#19d3c5;--violet:#9b5cff;--cream:#fff3dc;--ink:#1b0f2e;--muted:#b9a8d6;
   --p0:#19d3c5;--p1:#ff4f8b;--good:#3ee08f;--bad:#ff3b3b;
   --display:"Bowlby One",Impact,system-ui,sans-serif;--retro:"Righteous",system-ui,sans-serif;--body:"DM Sans",system-ui,sans-serif;
@@ -302,3 +302,19 @@ body.final-mode .round-chip{background:var(--gold);color:var(--ink)}
 /* wheel values go up between rounds */
 .wheel-wrap.restock .wheel svg{animation:restock .9s cubic-bezier(.2,1.4,.4,1)}
 @keyframes restock{0%{filter:brightness(2.2) saturate(1.6)}100%{filter:none}}
+
+/* third player */
+.contestant.p2{--pc:var(--p2)}
+.turn-banner.theirs.t2{color:var(--p2)}
+.score-row.three{grid-template-columns:repeat(3,1fr)}
+.score-row.three .vs{display:none}
+.score-row.three .contestant{flex-direction:column!important;text-align:center!important;gap:6px;padding:16px 10px 10px}
+.score-row.three .contestant .you-tag{align-self:center!important}
+.score-row.three .bank-line{justify-content:center!important}
+.score-row.three .turn-flag{left:50%!important;right:auto!important;transform:translate(-50%,6px)}
+.score-row.three .contestant.active .turn-flag{transform:translate(-50%,0)}
+.score-row.three .avatar{width:44px;height:44px;font-size:20px}
+@media (max-width:560px){.score-row.three{grid-template-columns:repeat(3,1fr);gap:6px}.score-row.three .contestant{padding:14px 4px 8px}.score-row.three .round-cash{font-size:26px}.score-row.three .bank-line b{font-size:18px}}
+
+/* keep the letter-result badge from changing the layout height */
+.letter-result{min-height:40px;display:flex;align-items:center;justify-content:center;padding:0 16px!important}

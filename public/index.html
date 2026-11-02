@@ -41,7 +41,7 @@
 
 <main id="mainArea">
 <section id="lobby" class="lobby panel">
-  <div class="eyebrow">TWO PLAYERS · ONE PUZZLE · BIG BRAIN ENERGY</div>
+  <div class="eyebrow">2–3 PLAYERS · ONE PUZZLE · BIG BRAIN ENERGY</div>
   <h1>Spin. Guess.<br><em>Outsmart.</em></h1>
   <p class="intro">Take turns spinning the wheel, calling letters, and solving the phrase. Invite a friend from anywhere.</p>
   <label for="playerName">YOUR CONTESTANT NAME</label>
@@ -50,7 +50,7 @@
     <button id="createBtn" class="primary">CREATE PRIVATE ROOM <span>↗</span></button>
     <div class="join-row"><input id="roomCode" maxlength="5" placeholder="ROOM CODE"><button id="joinBtn" class="secondary">JOIN ROOM</button></div>
   </div>
-  <p class="fine">Private room codes · Up to 2 players · No account required</p>
+  <p class="fine">Private room codes · 2 or 3 players · No account required</p>
   <div id="lobbyError" class="error"></div>
 </section>
 
@@ -63,7 +63,7 @@
 
   <div id="turnBanner" class="turn-banner idle"><span class="tb-arrow">◀</span><span id="turnBannerText">WAITING FOR PLAYERS</span><span class="tb-arrow">▶</span></div>
 
-  <div class="score-row">
+  <div class="score-row" id="scoreRow">
     <div class="contestant p0" id="contestant0">
       <div class="turn-flag">▶ UP NOW</div>
       <div class="avatar">1</div>
@@ -82,6 +82,16 @@
         <span class="player-name">Player 2</span><span class="you-tag hidden">YOU</span>
         <div class="cash-label">THIS ROUND</div>
         <strong class="round-cash" id="roundCash1">$0</strong>
+        <div class="bank-line">BANK <b class="score">$0</b></div>
+      </div>
+    </div>
+  <div class="contestant p2 hidden" id="contestant2">
+      <div class="turn-flag">▶ UP NOW</div>
+      <div class="avatar">3</div>
+      <div class="contestant-info">
+        <span class="player-name">Player 3</span><span class="you-tag hidden">YOU</span>
+        <div class="cash-label">THIS ROUND</div>
+        <strong class="round-cash" id="roundCash2">$0</strong>
         <div class="bank-line">BANK <b class="score">$0</b></div>
       </div>
     </div>
